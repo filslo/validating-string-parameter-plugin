@@ -1,22 +1,31 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>1.396</version>
+    <version>1.480.3</version>
   </parent>
+  
+  <groupId>org.jvnet.hudson.plugins</groupId>
   <artifactId>validating-string-parameter</artifactId>
+  <version>2.3-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <name>Validating String Parameter Plugin</name>
-  <version>2.3-SNAPSHOT</version>
   <url>http://wiki.jenkins-ci.org/display/JENKINS/Validating+String+Parameter+Plugin</url>
 
   <scm>
-   <connection>scm:git:git://github.com/jenkinsci/validating-string-parameter-plugin.git</connection>
-   <developerConnection>scm:git:git@github.com:jenkinsci/validating-string-parameter-plugin.git</developerConnection>
-    <url>http://github.com/jenkinsci/validating-string-parameter-pluginn</url>
+   <connection>scm:git:git://github.com/filslo/validating-string-parameter-plugin.git</connection>
+   <developerConnection>scm:git:git@github.com:filslo/validating-string-parameter-plugin.git</developerConnection>
+    <url>http://github.com/filslo/validating-string-parameter-pluginn</url>
   </scm>
+
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 
   <developers>
   	<developer>
@@ -25,11 +34,16 @@
   		<email>petehayes@gmail.com</email>
   		<timezone>-6</timezone>
   	</developer>
+  	<developer>
+			<id>filslo</id>
+			<name>Pierre Marguerite</name>
+			<timezone>+1</timezone>
+		</developer>
   </developers>
   
     <build>
     <plugins>
-      <plugin>
+     <!--  <plugin>
         <groupId>org.jenkins-ci.tools</groupId>
         <artifactId>maven-hpi-plugin</artifactId>
         <version>1.64</version>
@@ -37,7 +51,14 @@
         <configuration>
           <showDeprecation>true</showDeprecation>
         </configuration>
-      </plugin>
+      </plugin>-->
+      <plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
     </plugins>
   </build>
 
@@ -54,6 +75,20 @@
             <url>http://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
     </pluginRepositories>
+    
+    <distributionManagement>
+		<downloadUrl>https://github.com/filslo/validating-string-parameter/</downloadUrl>
+		<repository>
+			<id>filslo-cloudbees-release</id>
+			<name>filslo-cloudbees-release</name>
+			<url>dav:https://repository-filslo.forge.cloudbees.com/release/</url>
+		</repository>
+		<snapshotRepository>
+			<id>filslo-cloudbees-snapshot</id>
+			<name>filslo-cloudbees-snapshot</name>
+			<url>dav:https://repository-filslo.forge.cloudbees.com/snapshot/</url>
+		</snapshotRepository>
+	</distributionManagement>
 </project>  
   
 

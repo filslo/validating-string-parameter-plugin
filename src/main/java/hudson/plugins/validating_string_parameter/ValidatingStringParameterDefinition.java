@@ -24,13 +24,13 @@
 package hudson.plugins.validating_string_parameter;
 
 import hudson.Extension;
+import hudson.Util;
 import hudson.model.Hudson;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
+import hudson.model.ParameterDefinition.ParameterDescriptor;
 import hudson.util.FormValidation;
 
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 import net.sf.json.JSONObject;
 
@@ -48,7 +48,7 @@ import org.kohsuke.stapler.StaplerRequest;
  */
 public class ValidatingStringParameterDefinition extends ParameterDefinition {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
     private String defaultValue;
     private String regex;
     private String failedValidationMessage;
@@ -66,19 +66,19 @@ public class ValidatingStringParameterDefinition extends ParameterDefinition {
     }
 
     public String getDefaultValue() {
-        return defaultValue;
+        return this.defaultValue;
     }
 
     public String getRegex() {
-        return regex;
+        return this.regex;
     }
 
     public String getJsEncodedRegex() {
-        return regex.replace("\\", "\\\\");
+        return this.regex.replace("\\", "\\\\");
     }
 
     public String getFailedValidationMessage() {
-        return failedValidationMessage;
+        return this.failedValidationMessage;
     }
 
     public String getRootUrl() {
@@ -87,13 +87,46 @@ public class ValidatingStringParameterDefinition extends ParameterDefinition {
 
     @Override
     public ValidatingStringParameterValue getDefaultParameterValue() {
-        ValidatingStringParameterValue v = new ValidatingStringParameterValue(getName(), defaultValue, getRegex(), getDescription());
+        ValidatingStringParameterValue v = new ValidatingStringParameterValue(getName(), this.defaultValue, getRegex(), getDescription());
         return v;
     }
 
-    @Extension
-    public static class DescriptorImpl extends ParameterDescriptor {
+    @Override
+    public ParameterValue createValue(StaplerRequest req, JSONObject jo) {
+        ValidatingStringParameterValue value = req.bindJSON(ValidatingStringParameterValue.class, jo);
+        value.setDescription(getDescription());
+        value.setRegex(this.regex);
+        return value;
+    }
 
+    @Override
+    public ParameterValue createValue(StaplerRequest req) {
+        String[] valueAsArray = req.getParameterValues(getName());
+        if (valueAsArray == null || valueAsArray.length < 1) {
+            return getDefaultParameterValue();
+        } 
+        String value = Util.removeTrailingSlash(Util.fixNull(valueAsArray[0]).trim());
+        return new ValidatingStringParameterValue(getName(), value, this.regex, getDescription());
+    }
+    
+    @Extension
+    public static class ValidatingStringParameterDescriptor extends ParameterDescriptor {
+
+    	  /**
+         * The form validator.
+         */
+        private ValidatingStringParameterValidator mValidator;
+    	
+        /**
+         * Constructs {@link SiteMonitorDescriptor}.
+         */
+        public ValidatingStringParameterDescriptor() {
+            super();
+            this.load();
+            this.mValidator = new ValidatingStringParameterValidator();
+        }
+
+        
         @Override
         public String getDisplayName() {
             return "Validating String Parameter";
@@ -105,15 +138,10 @@ public class ValidatingStringParameterDefinition extends ParameterDefinition {
         }
 
         /**
-         * Chcek the regular expression entered by the user
+         * Check the regular expression entered by the user
          */
         public FormValidation doCheckRegex(@QueryParameter final String value) {
-            try {
-                Pattern.compile(value);
-                return FormValidation.ok();
-            } catch (PatternSyntaxException pse) {
-                return FormValidation.error("Invalid regular expression: " + pse.getDescription());
-            }
+        	return this.mValidator.doCheckRegex(value);
         }
 
         /**
@@ -122,35 +150,8 @@ public class ValidatingStringParameterDefinition extends ParameterDefinition {
         public FormValidation doValidate(@QueryParameter("regex") String regex,
                 @QueryParameter("failedValidationMessage") final String failedValidationMessage,
                 @QueryParameter("value") final String value) {
-            try {
-                if (Pattern.matches(regex, value)) {
-                    return FormValidation.ok();
-                } else {
-                    return failedValidationMessage == null || "".equals(failedValidationMessage)
-                            ? FormValidation.error("Value entered does not match regular expression: " + regex)
-                            : FormValidation.error(failedValidationMessage);
-                }
-            } catch (PatternSyntaxException pse) {
-                return FormValidation.error("Invalid regular expression [" + regex + "]: " + pse.getDescription());
-            }
+        	return this.mValidator.doValidate(regex, failedValidationMessage, value);
         }
-    }
+    }   
 
-    @Override
-    public ParameterValue createValue(StaplerRequest req, JSONObject jo) {
-        ValidatingStringParameterValue value = req.bindJSON(ValidatingStringParameterValue.class, jo);
-        value.setDescription(getDescription());
-        value.setRegex(regex);
-        return value;
-    }
-
-    @Override
-    public ParameterValue createValue(StaplerRequest req) {
-        String[] value = req.getParameterValues(getName());
-        if (value == null || value.length < 1) {
-            return getDefaultParameterValue();
-        } else {
-            return new ValidatingStringParameterValue(getName(), value[0], regex, getDescription());
-        }
-    }
 }

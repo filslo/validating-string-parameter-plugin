@@ -24,12 +24,17 @@
 package hudson.plugins.validating_string_parameter;
 
 import hudson.AbortException;
+import hudson.EnvVars;
 import hudson.Launcher;
+import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.StringParameterValue;
 import hudson.tasks.BuildWrapper;
+import hudson.util.VariableResolver;
+
 import java.io.IOException;
+import java.util.Locale;
 import java.util.regex.Pattern;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -40,20 +45,29 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * @since 1.0
  */
 public class ValidatingStringParameterValue extends StringParameterValue {
-    private String regex;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private String regex;
+	private String actualValue;
 
     @DataBoundConstructor
     public ValidatingStringParameterValue(String name, String value) {
         this(name, value, null, null);
+        
+        
     }
 
     public ValidatingStringParameterValue(String name, String value, String regex, String description) {
         super(name, value, description);
         this.regex = regex;
+       
+        this.actualValue = value;
     }
 
     public String getRegex() {
-        return regex;
+        return this.regex;
     }
 
     public void setRegex(String regex) {
@@ -61,25 +75,67 @@ public class ValidatingStringParameterValue extends StringParameterValue {
     }
 
     public String getValue() {
-        return value;
+        return this.value;
+    }
+    
+    /**
+     * Exposes the name/value as an environment variable.
+     */
+    @Override
+    public void buildEnvVars(AbstractBuild<?,?> build, EnvVars env) {
+        env.put(this.name,this.actualValue);
+        env.put(this.name.toUpperCase(Locale.ENGLISH),this.actualValue); // backward compatibility pre 1.345
+    }
+
+    @Override
+    public VariableResolver<String> createVariableResolver(AbstractBuild<?, ?> build) {
+        return new VariableResolver<String>() {
+            public String resolve(String name) {
+                return ValidatingStringParameterValue.this.name.equals(name) ? ValidatingStringParameterValue.this.actualValue : null;
+            }
+        };
     }
 
     @Override
     public BuildWrapper createBuildWrapper(AbstractBuild<?, ?> build) {
-        if (!Pattern.matches(regex, value)) {
+    	EnvVars env = build.getCharacteristicEnvVars();
+		EnvVarsUtils.overrideAll(env, build.getBuildVariables());
+		
+		this.actualValue = env.expand(ValidatingStringParameterValue.this.value);
+    	 if (!Pattern.matches(this.regex,this.actualValue)) {
             // abort the build within BuildWrapper
             return new BuildWrapper() {
                 @Override
                 public Environment setUp(AbstractBuild build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
-                    throw new AbortException("Invalid value for parameter [" + getName() + "] specified: " + value);
+                    throw new AbortException("Invalid value for parameter [" + getName() + "] specified: " + ValidatingStringParameterValue.this.actualValue);
                 }
             };
-        } else {
-            return null;
         }
+       return null;
+        
     }
 
-    @Override
+//    @Override
+//	public VariableResolver<String> createVariableResolver(
+//			final AbstractBuild<?, ?> build) {
+//    	return new VariableResolver<String>() {
+//            public String resolve(String name) {
+//            	String actualValue =  null;
+//            	if( name.equals(name)) {
+//            		EnvVars env = build.getCharacteristicEnvVars();
+//        			EnvVarsUtils.overrideAll(env, build.getBuildVariables());
+//        			
+//        			 actualValue = env.expand(ValidatingStringParameterValue.this.value);
+//            	}
+//                return  actualValue;
+//            }
+//        };
+//    	// deal with environment and build variables
+//    		
+//		
+//	}
+
+	@Override
     public int hashCode() {
         final int prime = 71;
         int result = super.hashCode();
@@ -99,11 +155,11 @@ public class ValidatingStringParameterValue extends StringParameterValue {
             return false;
         }
         ValidatingStringParameterValue other = (ValidatingStringParameterValue) obj;
-        if (value == null) {
+        if (this.value == null) {
             if (other.value != null) {
                 return false;
             }
-        } else if (!value.equals(other.value)) {
+        } else if (!this.value.equals(other.value)) {
             return false;
         }
         return true;
@@ -111,6 +167,6 @@ public class ValidatingStringParameterValue extends StringParameterValue {
 
     @Override
     public String toString() {
-        return "(ValidatingStringParameterValue) " + getName() + "='" + value + "'";
+        return "(ValidatingStringParameterValue) " + getName() + "='" + this.value + "'";
     }
 }
