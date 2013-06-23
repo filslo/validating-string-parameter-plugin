@@ -16,9 +16,10 @@
 
   <scm>
    <connection>scm:git:git://github.com/filslo/validating-string-parameter-plugin.git</connection>
-   <developerConnection>scm:git:git@github.com:filslo/validating-string-parameter-plugin.git</developerConnection>
+   <developerConnection>scm:git:git://github.com/filslo/validating-string-parameter-plugin.git</developerConnection>
     <url>http://github.com/filslo/validating-string-parameter-pluginn</url>
   </scm>
+
 
 
 	<properties>
