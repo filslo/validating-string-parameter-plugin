@@ -26,9 +26,10 @@ package hudson.plugins.validating_string_parameter;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Launcher;
-import hudson.Util;
-import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
+import hudson.model.ParameterValue;
+import hudson.model.TaskListener;
+import hudson.model.AbstractBuild;
 import hudson.model.StringParameterValue;
 import hudson.tasks.BuildWrapper;
 import hudson.util.VariableResolver;
@@ -36,6 +37,7 @@ import hudson.util.VariableResolver;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.regex.Pattern;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -98,10 +100,21 @@ public class ValidatingStringParameterValue extends StringParameterValue {
 
     @Override
     public BuildWrapper createBuildWrapper(AbstractBuild<?, ?> build) {
-    	EnvVars env = build.getCharacteristicEnvVars();
-		EnvVarsUtils.overrideAll(env, build.getBuildVariables());
+    	EnvVars env;
+		try {
+			env = build.getEnvironment(TaskListener.NULL);
+			EnvVarsUtils.overrideAll(env, build.getBuildVariables());
+			this.actualValue = env.expand(ValidatingStringParameterValue.this.value);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}//.getCharacteristicEnvVars();
 		
-		this.actualValue = env.expand(ValidatingStringParameterValue.this.value);
+		
+		
     	 if (!Pattern.matches(this.regex,this.actualValue)) {
             // abort the build within BuildWrapper
             return new BuildWrapper() {

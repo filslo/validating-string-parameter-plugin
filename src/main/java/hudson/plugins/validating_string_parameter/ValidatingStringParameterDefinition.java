@@ -25,13 +25,10 @@ package hudson.plugins.validating_string_parameter;
 
 import hudson.Extension;
 import hudson.Util;
+import hudson.model.ParameterValue;
 import hudson.model.Hudson;
 import hudson.model.ParameterDefinition;
-import hudson.model.ParameterValue;
-import hudson.model.ParameterDefinition.ParameterDescriptor;
 import hudson.util.FormValidation;
-
-
 import net.sf.json.JSONObject;
 
 import org.kohsuke.stapler.DataBoundConstructor;
