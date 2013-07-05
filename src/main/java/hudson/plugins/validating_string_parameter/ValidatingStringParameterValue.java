@@ -85,8 +85,12 @@ public class ValidatingStringParameterValue extends StringParameterValue {
      */
     @Override
     public void buildEnvVars(AbstractBuild<?,?> build, EnvVars env) {
-        env.put(this.name,this.actualValue);
-        env.put(this.name.toUpperCase(Locale.ENGLISH),this.actualValue); // backward compatibility pre 1.345
+    	if ( this.actualValue != null ) {
+    		//Fixed : ERROR: Failed to record SCM polling for hudson.model.FreeStyleProject@1b159209[]
+//    		java.lang.IllegalArgumentException: Null value not allowed as an environment variable: PREVIOUS_PACKAGE
+        	env.put(this.name,this.actualValue);
+        	env.put(this.name.toUpperCase(Locale.ENGLISH),this.actualValue); // backward compatibility pre 1.345
+    	}
     }
 
     @Override
